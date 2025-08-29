@@ -4,11 +4,6 @@ const path = require("path");
 
 async function main() {
   console.log("Starting deployment to", hre.network.name, "network...");
-  
-  if (!process.env.PRIVATE_KEY) {
-    console.error("Error: PRIVATE_KEY environment variable not set!");
-    process.exit(1);
-  }
 
   console.log("Deploying XineteDecentralizedStorage contract...");
 
