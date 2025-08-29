@@ -1,117 +1,207 @@
-# Deployment Guide for Xinete Storage Platform
+# Deployment Guide for Xinetee Decentralized Storage Platform
+
+This guide will walk you through the process of deploying the Xinetee platform to a production environment.
 
 ## Prerequisites
 
-1. Python 3.8+ installed
-2. Node.js 14+ and npm installed
-3. IPFS Pinata account with API keys
-4. SKALE Network account and credentials
+- Node.js (v16 or higher)
+- Access to a SKALE network endpoint (testnet or mainnet)
+- An Ethereum wallet with SKALE tokens for deployment
+- A dedicated IPFS node or access to an IPFS pinning service
+- Git
 
-## Backend Deployment
-
-### 1. Environment Setup
-
-Create a `.env` file in the backend directory with the following variables:
-
-```env
-ALLOWED_ORIGINS=http://localhost:3000,https://your-frontend-domain.com
-PINATA_API_KEY=c9b9b1234ca03df077ef
-PINATA_SECRET_KEY=5039f58273154b1adfef004e07ae535c8987d5c5c1c1b44ca3b75714085cb0e5
-SKALE_ENDPOINT=https://testnet.skalenodes.com/v1/lanky-ill-funny-testnet
-SKALE_PRIVATE_KEY=d6795c913606efc3b717b90514cbf40b666537585c6d30b019de3fcc4f17d5f6
-JWT_SECRET=c8d1a95d37cb4e06b3e3fa1f89a37d2c9b8f276e3a094c51b5f1d98e2f7d4a6b
-```
-
-### 2. Install Dependencies
+## 1. Clone and Prepare the Repository
 
 ```bash
-pip install -r requirements.txt
-```
+# Clone the repository
+git clone https://github.com/your-username/xinete-storage.git
+cd xinete-storage
 
-### 3. Database Setup
-
-Ensure the following files exist and have write permissions:
-- `backend/users.json`
-- `backend/file_metadata.json`
-
-### 4. Start the Backend Server
-
-Development:
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Production:
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
-```
-
-## Frontend Deployment
-
-### 1. Environment Setup
-
-Create a `.env` file in the frontend directory:
-
-```env
-VITE_BACKEND_URL=http://your-backend-url:8000
-VITE_SKALE_ENDPOINT=your_skale_endpoint
-```
-
-### 2. Install Dependencies
-
-```bash
+# Install dependencies
 npm install
 ```
 
-### 3. Build for Production
+## 2. Configure Environment Variables
+
+### For Smart Contract Deployment
+
+Create a `.env` file in the root directory:
 
 ```bash
+cp .env.example .env
+```
+
+Edit the `.env` file and add your deployment wallet's private key and SKALE endpoint:
+
+```
+# Blockchain Configuration
+PRIVATE_KEY=your_private_key_here
+SKALE_ENDPOINT=https://mainnet.skalenodes.com/v1/your-skale-chain-endpoint
+
+# IPFS Configuration
+IPFS_API_HOST=your-ipfs-node.example.com
+IPFS_API_PORT=5001
+IPFS_GATEWAY_PORT=8080
+IPFS_SPAWN_PORT=4001
+```
+
+⚠️ **IMPORTANT**: Never commit your private key to version control. Always keep your `.env` file in `.gitignore`.
+
+⚠️ **IMPORTANT**: Never commit your private key to version control. Always keep your `.env` file in `.gitignore`.
+
+### For Frontend
+
+Create a production environment file:
+
+```bash
+cd frontend
+cp .env.example .env.production
+```
+
+Edit the `.env.production` file:
+
+```
+# Production IPFS Configuration
+VITE_IPFS_GATEWAY=https://cloudflare-ipfs.com/ipfs
+VITE_IPFS_API_HOST=your-ipfs-node.example.com
+VITE_IPFS_API_PORT=5001
+
+# Production Blockchain Configuration
+VITE_CONTRACT_ADDRESS=0x1234567890123456789012345678901234567890
+VITE_BLOCKCHAIN_RPC_URL=https://mainnet.skalenodes.com/v1/your-skale-chain-endpoint
+
+# Optional: Public gateway fallback
+VITE_IPFS_PUBLIC_GATEWAY=https://cloudflare-ipfs.com/ipfs
+```
+
+## 3. Deploy Smart Contract
+
+From the root directory:
+
+```bash
+npx hardhat compile
+npx hardhat run scripts/deploy.js --network skale
+```
+
+This will:
+1. Compile your contracts
+2. Deploy to the SKALE network
+3. Save deployment information to `deployments/skale.json`
+4. Attempt to verify the contract on the block explorer (if available)
+
+⚠️ **Note**: Copy the deployed contract address for the next step.
+
+## 4. Update Frontend Configuration
+
+Update your `.env.production` file with the deployed contract address:
+
+```
+VITE_CONTRACT_ADDRESS=your_deployed_contract_address
+```
+
+## 5. Build the Frontend
+
+```bash
+cd frontend
 npm run build
 ```
 
-### 4. Serve Production Build
+This will create a production-ready build in the `dist` directory.
+
+## 6. Deploy the Frontend
+
+### Option 1: Static Hosting (Recommended)
+
+You can deploy the frontend to any static hosting service:
+
+- **Netlify**: Connect your repository and set the build command to `cd frontend && npm run build`
+- **Vercel**: Similar to Netlify, connect your repository
+- **AWS S3**: Upload the `dist` directory and configure for static website hosting
+- **GitHub Pages**: Deploy the `dist` directory
+
+### Option 2: Traditional Web Server
+
+If using a traditional web server (Nginx, Apache):
 
 ```bash
-npm run preview
+# Example for Nginx
+cp -r frontend/dist/* /var/www/html/
 ```
 
-## Cloud Deployment Steps
+Configure your web server with proper headers:
 
-### Backend (Using Cloud Platform)
+Configure your web server with proper headers:
 
-1. Choose a cloud provider (e.g., AWS, GCP, Azure)
-2. Set up a virtual machine or container service
-3. Install Python and dependencies
-4. Set up environment variables
-5. Use a process manager (e.g., PM2, Supervisor) to run the uvicorn server
-6. Configure nginx as a reverse proxy
+```nginx
+# Example Nginx configuration
+server {
+    listen 80;
+    server_name your-domain.com;
+    root /var/www/html;
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Add CORS headers for IPFS node access
+    location /ipfs-cors/ {
+        proxy_pass http://your-ipfs-node:5001/;
+        proxy_set_header Host $host;
+        add_header Access-Control-Allow-Origin '*' always;
+        add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS' always;
+        add_header Access-Control-Allow-Headers 'Origin, X-Requested-With, Content-Type, Accept' always;
+    }
+}
+```
 
-### Frontend (Static Hosting)
+## 7. Configure IPFS Node for Production
 
-1. Build the frontend application
-2. Upload the `dist` directory to a static hosting service
-3. Configure the domain and SSL certificate
+If running your own IPFS node, ensure it's properly configured:
+
+```bash
+# Configure CORS headers
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["https://your-domain.com", "https://www.your-domain.com"]'
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "POST", "GET"]'
+
+# Restart IPFS daemon
+ipfs daemon
+```
+
+## 8. Test Your Deployment
+
+1. Visit your deployed frontend
+2. Connect your wallet to SKALE network
+3. Create an NFT to verify everything works
+4. Check that the NFT appears in your collection
 
 ## Security Considerations
 
-1. Use HTTPS for all communications
-2. Implement rate limiting
-3. Set up proper CORS configuration
-4. Secure all API keys and sensitive data
-5. Regular security audits and updates
+1. **Private Keys**: Never expose private keys in your code or frontend
+2. **IPFS Node**: Secure your IPFS node properly if using your own
+3. **Frontend Security**: Consider adding Content Security Policy headers
+4. **Rate Limiting**: Implement rate limiting for your IPFS node if public
 
 ## Monitoring and Maintenance
 
-1. Set up logging and monitoring
-2. Configure automated backups
-3. Implement health checks
-4. Set up alerts for system issues
+1. **Contract Monitoring**: Monitor your contract for any unusual activity
+2. **IPFS Pinning**: Regularly check that content is still pinned on IPFS
+3. **Frontend Updates**: When updating, always test thoroughly before deploying
 
 ## Troubleshooting
 
-1. Check logs for errors
-2. Verify environment variables
-3. Confirm network connectivity
-4. Validate IPFS and blockchain connections
+### Common Issues
 
-For additional support, refer to the project documentation or contact the development team.
+1. **Wallet Connection Issues**:
+   - Ensure the correct network is configured in MetaMask
+   - Check console for connection errors
+
+2. **IPFS Upload Failures**:
+   - Verify IPFS node connectivity and CORS settings
+   - Check for sufficient storage space on IPFS node
+
+3. **Contract Interaction Failures**:
+   - Verify contract address is correct
+   - Ensure wallet has SKALE tokens for gas
+   - Check that ABI matches deployed contract
+
+For more detailed issues, check the browser console and server logs.

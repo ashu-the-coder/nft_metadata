@@ -1,17 +1,12 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../App';
+import { BlockchainContext } from '../App';
 import { useTheme } from '../contexts/ThemeContext';
 
 function Navbar() {
-  const { logout, isConnected } = useContext(AuthContext);
+  const { isConnected, userAddress, connectWallet, disconnectWallet } = useContext(BlockchainContext);
   const { darkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow transition-colors duration-200">
@@ -19,25 +14,45 @@ function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Xinetee</span>
+              <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Xinetee NFT Storage</span>
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <span className={`px-3 py-1 rounded-full text-sm ${isConnected ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
-              {isConnected ? 'Wallet Connected' : 'Wallet Disconnected'}
-            </span>
+            {isConnected ? (
+              <div className="flex items-center space-x-2">
+                <span className="px-3 py-1 rounded-full text-sm bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                  {userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'Connected'}
+                </span>
+                <button
+                  onClick={disconnectWallet}
+                  className="px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-600 hover:text-red-700 focus:outline-none"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={connectWallet}
+                className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Connect Wallet
+              </button>
+            )}
+            
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/nft/create')}
               className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
             >
-              Profile
+              Create NFT
             </button>
+            
             <button
-              onClick={handleLogout}
-              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+              onClick={() => navigate('/nft/collection')}
+              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
             >
-              Logout
+              NFT Collection
             </button>
+            
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors duration-200"

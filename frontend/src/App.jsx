@@ -1,18 +1,15 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, createContext, useContext, useEffect } from 'react';
+import { useState, createContext, useEffect } from 'react';
 import { ethers } from 'ethers';
-import Login from './components/Login';
-import Register from './components/Register';
-import Dashboard from './components/Dashboard';
-import Profile from './components/Profile';
 import Navbar from './components/Navbar';
+import NFTCreate from './components/NFTCreate';
+import NFTCollection from './components/NFTCollection';
 import { ThemeProvider } from './contexts/ThemeContext';
 
-// Create Authentication Context
-export const AuthContext = createContext(null);
+// Create Blockchain Context
+export const BlockchainContext = createContext(null);
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('token'));
   const [isConnected, setIsConnected] = useState(localStorage.getItem('walletConnected') === 'true');
   const [userAddress, setUserAddress] = useState(localStorage.getItem('userAddress'));
 
@@ -68,88 +65,52 @@ function App() {
     }
   }, []);
 
-  const login = async (newToken) => {
-    setToken(newToken);
-    localStorage.setItem('token', newToken);
-    
-    // Check wallet connection on login
+  const connectWallet = async () => {
     if (window.ethereum) {
       try {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        const isConnected = accounts.length > 0;
-        setIsConnected(isConnected);
-        localStorage.setItem('walletConnected', isConnected);
-        
-        if (isConnected && accounts[0]) {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts.length > 0) {
+          setIsConnected(true);
           setUserAddress(accounts[0]);
+          localStorage.setItem('walletConnected', 'true');
           localStorage.setItem('userAddress', accounts[0]);
+          return true;
         }
       } catch (error) {
-        console.error('Error checking wallet connection:', error);
+        console.error('Error connecting wallet:', error);
       }
+    } else {
+      alert('Please install MetaMask or another Ethereum wallet');
     }
+    return false;
   };
 
-  const logout = () => {
-    setToken(null);
+  const disconnectWallet = () => {
     setIsConnected(false);
     setUserAddress(null);
-    localStorage.removeItem('token');
+    localStorage.setItem('walletConnected', 'false');
     localStorage.removeItem('userAddress');
   };
 
   return (
     <ThemeProvider>
-      <AuthContext.Provider value={{ token, login, logout, isConnected, setIsConnected, userAddress }}>
+      <BlockchainContext.Provider value={{ 
+        isConnected, 
+        userAddress, 
+        connectWallet, 
+        disconnectWallet 
+      }}>
         <Router>
           <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
-            {token && <Navbar />}
+            <Navbar />
             <Routes>
-              <Route
-                path="/login"
-                element={
-                  !token ? (
-                    <Login />
-                  ) : (
-                    <Navigate to="/dashboard" replace />
-                  )
-                }
-              />
-              <Route
-                path="/register"
-                element={
-                  !token ? (
-                    <Register />
-                  ) : (
-                    <Navigate to="/dashboard" replace />
-                  )
-                }
-              />
-              <Route
-                path="/dashboard"
-                element={
-                  token ? (
-                    <Dashboard />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  token ? (
-                    <Profile />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/nft/create" element={<NFTCreate />} />
+              <Route path="/nft/collection" element={<NFTCollection />} />
+              <Route path="/" element={<Navigate to="/nft/create" replace />} />
             </Routes>
           </div>
         </Router>
-      </AuthContext.Provider>
+      </BlockchainContext.Provider>
     </ThemeProvider>
   );
 }

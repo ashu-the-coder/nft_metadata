@@ -1,83 +1,73 @@
-# Xinetee Decentralized Storage Platform
+# Xinetee Fully Decentralized Storage Platform
 
-A decentralized storage platform built on SKALE Network that allows users to store and manage files using IPFS and blockchain technology, featuring secure hash-based file retrieval and enhanced smart contract functionality.
+A 100% decentralized storage platform built on SKALE Network that allows users to store and manage NFT metadata using direct IPFS node interactions and blockchain technology, featuring secure hash-based metadata retrieval without any centralized backend.
 
 ## Project Overview
 
-Xinetee is a decentralized storage solution that combines:
-- IPFS (InterPlanetary File System) for distributed file storage
+Xinetee is a fully decentralized storage solution that combines:
+- IPFS (InterPlanetary File System) for distributed file storage with direct node interaction
 - SKALE Network for blockchain operations
-- Smart contracts for managing file ownership, access, and metadata
-- FastAPI backend with JWT authentication for secure API services
+- Smart contracts for managing metadata ownership and verification
+- React frontend with wallet-based authentication
+- No backend dependencies - everything runs client-side
 - Hash-based file retrieval system for enhanced security
-- React frontend for intuitive user interface
 
 ## Technical Stack
 
-### Backend
-- FastAPI (Python web framework)
-- Web3.py for blockchain interactions
-- Pinata SDK for IPFS integration
-- Python-dotenv for environment management
-- JWT-based authentication system
-- Python-multipart for file handling
-- Pydantic for data validation
-- Cryptography for secure operations
-- Beacon-chain for blockchain synchronization
-- Aiohttp for async HTTP requests
-
 ### Frontend
-- React.js
-- Web3.js for blockchain interactions
-- Modern UI components
+- React.js with Vite for fast development
+- Ethers.js for blockchain interactions
+- IPFS HTTP Client for direct IPFS node interaction
+- TailwindCSS for responsive UI
+- Browser Web Crypto API for hashing operations
 
 ### Blockchain
 - SKALE Network (Testnet)
 - Solidity smart contracts
 - Hardhat development environment
 
+### IPFS Storage
+- Direct IPFS node interaction via HTTP client
+- Automatic content pinning system
+- Opportunistic pinning on content retrieval
+- Manual pinning controls
+- For detailed information about the pinning system, see [IPFS_PINNING.md](./docs/IPFS_PINNING.md)
+
 ## Project Structure
 
 ```
-├── backend/
-│   ├── main.py              # FastAPI application entry point
-│   ├── models/              # Data models and schemas
-│   ├── routes/              # API route handlers
-│   ├── services/            # Business logic services
-│   ├── file_metadata.json   # File metadata storage
-│   ├── users.json           # User data storage
-│   └── user_data/           # User-specific data directory
 ├── contracts/
-│   └── XineteStorage.sol    # Smart contract for storage management
+│   └── XineteDecentralizedStorage.sol  # Smart contract for decentralized storage
 ├── frontend/
-│   ├── src/                 # Source code directory
-│   │   ├── components/      # React components
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── services/        # API and blockchain services
-│   │   ├── styles/          # CSS and styling files
-│   │   ├── utils/           # Utility functions
-│   │   └── App.jsx          # Main application component
-│   ├── index.html           # HTML entry point
-│   ├── package.json         # Frontend dependencies
-│   ├── tailwind.config.js   # Tailwind CSS configuration
-│   ├── postcss.config.js    # PostCSS configuration
-│   └── vite.config.js       # Vite bundler configuration
+│   ├── src/                            # Source code directory
+│   │   ├── components/                 # React components
+│   │   ├── contexts/                   # React contexts (BlockchainContext, ThemeContext)
+│   │   ├── services/                   # Blockchain and IPFS services
+│   │   │   ├── blockchainService.js    # Direct blockchain interaction service
+│   │   │   └── ipfsService.js          # Direct IPFS interaction service
+│   │   ├── contracts/                  # Contract ABIs
+│   │   └── App.jsx                     # Main application component
+│   ├── index.html                      # HTML entry point
+│   ├── package.json                    # Frontend dependencies
+│   ├── tailwind.config.js              # Tailwind CSS configuration
+│   ├── postcss.config.js               # PostCSS configuration
+│   └── vite.config.js                  # Vite bundler configuration
 ├── scripts/
-│   └── deploy.js            # Contract deployment script
-├── artifacts/               # Compiled contract artifacts
-├── cache/                   # Hardhat cache directory
-├── hardhat.config.js        # Hardhat configuration
-├── package.json             # Project dependencies
-└── requirements.txt         # Python dependencies
+│   └── deploy.js                       # Contract deployment script
+├── artifacts/                          # Compiled contract artifacts
+├── cache/                              # Hardhat cache directory
+├── hardhat.config.js                   # Hardhat configuration
+└── package.json                        # Project dependencies
 ```
 
 ## Setup Instructions
 
 ### Prerequisites
 
-1. Node.js (v14 or higher)
-2. Python (v3.8 or higher)
-3. Git
+1. Node.js (v16 or higher)
+2. Local IPFS node or access to a remote IPFS node
+3. MetaMask or another Ethereum wallet
+4. Git
 
 ### Environment Setup
 
@@ -87,120 +77,95 @@ git clone <repository-url>
 cd xinete-storage
 ```
 
-2. Backend Setup:
+2. Install dependencies and compile contracts:
 ```bash
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Configure environment variables
-cd backend
-cp .env.example .env
-# Edit .env with your credentials:
-# - PINATA_API_KEY
-# - PINATA_API_SECRET
-# - PRIVATE_KEY
-# - CONTRACT_ADDRESS
+npm install
+npx hardhat compile
 ```
 
-3. Smart Contract Deployment:
+3. Deploy the smart contract:
 ```bash
-# Install dependencies
-npm install
-
-# Deploy to SKALE testnet
-# The smart contract will be deployed to SKALE testnet network
-# After deployment, the contract address will be displayed in the console
-# Make sure to save the contract address for frontend and backend configuration
 npx hardhat run scripts/deploy.js --network skale
-
-# Note: The smart contract is deployed on SKALE testnet for testing and development purposes
-# You can verify the contract on SKALE testnet explorer after deployment
 ```
 
-4. Frontend Setup:
+4. Configure frontend environment:
 ```bash
 cd frontend
-npm install
+cp .env.example .env
 ```
 
-## Running the Application
+5. Update the `.env` file with:
+```
+# IPFS Gateway URL for accessing content
+VITE_IPFS_GATEWAY=http://localhost:8080/ipfs
 
-### Development Environment
+# IPFS API Configuration for direct access
+VITE_IPFS_API_HOST=localhost
+VITE_IPFS_API_PORT=5001
 
-1. Start the Backend:
-```bash
-cd backend
-uvicorn main:app --reload
+# Blockchain Configuration
+VITE_CONTRACT_ADDRESS=<deployed-contract-address>
+VITE_BLOCKCHAIN_RPC_URL=https://testnet.skalenodes.com/v1/lanky-ill-funny-testnet
 ```
 
-2. Start the Frontend:
+6. Start the development server:
 ```bash
-cd frontend
 npm run dev
 ```
 
-3. Access the development environment:
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000
-- API Documentation: http://localhost:8000/docs
+## Usage Guide
 
-### Production Environment
+### Setting Up Your IPFS Node
 
-The application is deployed and accessible at:
-- Frontend: http://164.52.203.17:5173
-- Backend API: http://164.52.203.17:8000
-- API Documentation: http://164.52.203.17:8000/docs
+1. Install IPFS Desktop or IPFS Daemon:
+   - [IPFS Desktop](https://docs.ipfs.tech/install/ipfs-desktop/)
+   - [IPFS Command Line](https://docs.ipfs.tech/install/command-line/)
 
-## Security Considerations
+2. Ensure CORS is properly configured on your IPFS node:
+```bash
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
+ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["PUT", "POST", "GET"]'
+```
 
-1. Never commit your `.env` file containing sensitive credentials
-2. Keep your private keys secure and never share them
-3. Use environment variables for all sensitive configuration
-4. Implement proper access controls in your smart contracts
+3. Restart your IPFS node
 
-## Features
+### Creating NFTs
 
-### User Authentication and Profile Management
-- JWT-based secure authentication system
-- User registration and login functionality
-- MetaMask wallet integration for blockchain interactions
-- User profile management with wallet address linking
-- Protected API endpoints with role-based access control
+1. Connect your wallet by clicking "Connect Wallet" in the navbar
+2. Navigate to "Create NFT" page
+3. Upload an image
+4. Fill in the metadata (name, description, attributes)
+5. Submit to store on IPFS and register on the blockchain
 
-### File Management System
-- Secure file upload and download through IPFS
-- Pinata service integration for reliable IPFS pinning
-- File metadata storage on blockchain
-- Efficient file deduplication system
-- Hash-based file identification and retrieval
-- File sharing capabilities between users
+### Viewing Your NFT Collection
 
-### Smart Contract Features
-- File ownership management and tracking
-- Access control mechanisms for shared files
-- Metadata storage and retrieval
-- Event tracking for all file operations
-- Integration with SKALE Network for scalability
+1. Connect your wallet
+2. Navigate to "NFT Collection" page
+3. All NFTs associated with your wallet address will be displayed
+4. You can verify each NFT's blockchain registration by clicking "Verify on Blockchain"
 
-### User Interface
-- Modern and responsive React-based interface
-- Dark/Light theme support for better user experience
-- Real-time file upload progress tracking
-- Intuitive file management dashboard
-- Seamless MetaMask integration for transactions
+## Core Features
 
-## API Documentation
+1. **100% Decentralized Operation**:
+   - No centralized backend or database
+   - All data stored on IPFS and blockchain
+   - Direct IPFS node interaction from the browser
 
-The API documentation is available at `/docs` when running the backend server. It provides detailed information about available endpoints and their usage.
+2. **Wallet-Based Authentication**:
+   - No username/password needed
+   - Secure Web3 wallet integration
+   - Seamless blockchain interaction
 
-## Contributing
+3. **Metadata Storage and Verification**:
+   - NFT metadata stored on IPFS
+   - CIDs and hashes stored on blockchain
+   - Cryptographic verification of metadata integrity
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+4. **Direct IPFS Integration**:
+   - Upload directly to IPFS nodes
+   - No centralized pinning service required
+   - Client-side IPFS interaction
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+[MIT License](LICENSE)
